@@ -1,4 +1,31 @@
 AWS ID : 792010162909
 
+echo "Hostname,size,softlink,count,filecheck" > folder.csv
+
+for host in $(cat $1)
+do
+    echo -n $host >> folder.csv
+    echo -n "," >> folder.csv
+
+    # Perform all tasks in a single SSH login
+    output=$(ssh $host '
+        size=$(du -sh /tools/ver/java-11-openjdk-11.* | awk "{print \$1}");
+        softlink_count=$(find /tools/ver/openjdk-11.* -type l | wc -l);
+        file_count=$(find /tools/ver/openjdk-11.* -type f | wc -l);
+        echo "$size,$softlink_count,$file_count"
+    ')
+
+    # Append results to CSV
+    echo -n "$output" >> folder.csv
+    echo -n "," >> folder.csv
+
+    # Check SSH login success
+    if [[ $? != 0 ]]
+    then
+        echo "Unable to login to $host" >> folder.csv
+    fi
+
+    echo "" >> folder.csv  # Add a newline for the next entry
+done
 
 
